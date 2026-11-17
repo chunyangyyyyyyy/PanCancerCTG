@@ -44,7 +44,7 @@ jobs:
           working-directory: MaligCTG
           args: 'c("--no-manual")'
           error-on: '"warning"'
-          check-dir: '"${{ runner.temp }}/MaligCTG-check"'
+          check-dir: '"../../MaligCTG-check"'
           upload-results: true
       - name: Verify both default calls in fresh R sessions
         shell: bash
@@ -52,3 +52,12 @@ jobs:
           R CMD INSTALL MaligCTG
           Rscript --vanilla MaligCTG/tests/smoke.R namespaced
           Rscript --vanilla MaligCTG/tests/smoke.R attached
+      - name: Build the source archive
+        working-directory: ${{ runner.temp }}
+        shell: bash
+        run: R CMD build "$GITHUB_WORKSPACE/MaligCTG" --no-manual
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: MaligCTG-0.1.0-source
+          path: ${{ runner.temp }}/MaligCTG_*.tar.gz
+          if-no-files-found: error
