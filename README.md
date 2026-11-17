@@ -5,8 +5,6 @@ MaligCTG scores cells in a Seurat object against malignant-like and normal-like 
 ## Contents
 
 - `MaligCTG/`: the R package, exposing `run.MaligCTG()` and the bundled CTG catalog `CTG.df`.
-- `code/code.for.analysis/FindTumorLayers.r`: a separate spatial analysis function.
-- `code/code.for.figures/`: figure scripts retain the original project data paths; required input data are not bundled.
 
 ## Installation
 
@@ -52,7 +50,7 @@ SingleR scores are similarity scores, not malignant probabilities. GMM uses `p.t
 ## Input notes
 
 - Use raw counts from the selected assay (`assay = "RNA"` by default).
-- Match gene identifiers to the selected CTG-table column (`gene.id = "symbol"` by default, or `"ensembl"`). Ensembl version suffixes are stripped from matrix row names only; supply unversioned IDs in the CTG table. Matching is case-sensitive, and duplicate matching rows are counted separately.
+- Match gene identifiers to the selected CTG-table column (`gene.id = "symbol"` by default, or `"ensembl"`).
 - For a Seurat v5 assay with multiple counts layers, join those layers with `SeuratObject::JoinLayers()` first.
 
 ## License
