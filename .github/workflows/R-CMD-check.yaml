@@ -1,0 +1,54 @@
+name: R CMD check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'MaligCTG/**'
+      - '.github/workflows/R-CMD-check.yaml'
+  pull_request:
+    paths:
+      - 'MaligCTG/**'
+      - '.github/workflows/R-CMD-check.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: MaligCTG
+          extra-packages: any::rcmdcheck
+          needs: check
+      - name: Parse the standalone scripts without running them
+        shell: Rscript {0}
+        run: |
+          for (file in list.files("code", pattern = "\\.[Rr]$", recursive = TRUE, full.names = TRUE)) {
+            parse(file = file)
+          }
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: MaligCTG
+          args: 'c("--no-manual")'
+          error-on: '"warning"'
+          check-dir: '"${{ runner.temp }}/MaligCTG-check"'
+          upload-results: true
+      - name: Verify both default calls in fresh R sessions
+        shell: bash
+        run: |
+          R CMD INSTALL MaligCTG
+          Rscript --vanilla MaligCTG/tests/smoke.R namespaced
+          Rscript --vanilla MaligCTG/tests/smoke.R attached

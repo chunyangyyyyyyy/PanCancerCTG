@@ -1,0 +1,3 @@
+# Preserve the exact source-script and data bytes across platforms.
+code/** -text
+MaligCTG/data/** -text

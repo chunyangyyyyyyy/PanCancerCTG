@@ -1,0 +1,30 @@
+#' CTG catalog
+#'
+#' The catalog of 443 cancer-testis genes (CTGs) identified in the accompanying
+#' study, with gene-level annotations. It is the default \code{CTGs} table of
+#' \code{\link{run.MaligCTG}}, which uses only the \code{ensembl} and
+#' \code{symbol} columns; the other columns are annotations. The content matches
+#' the "CTG catalog" sheet of Supplementary Table S3.
+#'
+#' @format A data frame with 443 rows and 18 columns:
+#' \describe{
+#' \item{\code{ensembl}}{Ensembl gene ID, without version suffix.}
+#' \item{\code{symbol}}{HGNC-approved gene symbol.}
+#' \item{\code{name}}{HGNC-approved gene name.}
+#' \item{\code{location}}{Cytogenetic location.}
+#' \item{\code{location_sortable}}{Cytogenetic location with a zero-padded chromosome number, for sorting.}
+#' \item{\code{locus_group}}{HGNC locus group.}
+#' \item{\code{locus_type}}{HGNC locus type.}
+#' \item{\code{is_CTdb}}{\code{"yes"} if the gene is among the CTdatabase-derived candidates, otherwise \code{"no"}.}
+#' \item{\code{is_HPA}}{\code{"yes"} if the gene is among the testis tissue-enriched or group-enriched genes of the Human Protein Atlas, otherwise \code{"no"}.}
+#' \item{\code{testis.TPM}}{Median TPM in GTEx testis.}
+#' \item{\code{max.non.testis.TPM}}{Highest median TPM across the non-testicular GTEx tissue categories.}
+#' \item{\code{max.tissue}}{GTEx tissue category with that highest median TPM.}
+#' \item{\code{tier1}}{Minimal non-testicular expression criterion (\code{max.non.testis.TPM} not exceeding 3): \code{"Meets"}, \code{"Does not meet"} or \code{"Not evaluable"}.}
+#' \item{\code{n.cancers}}{Number of the 24 evaluated TCGA cancer types in which the gene is tumor-enriched (tumor-versus-normal AUROC > 0.70 and Benjamini-Hochberg adjusted P < 0.05).}
+#' \item{\code{max.auc}}{Highest tumor-versus-normal AUROC across the evaluated TCGA cancer types.}
+#' \item{\code{cancers}}{Comma-separated TCGA cancer types in which the gene is tumor-enriched, in decreasing order of AUROC.}
+#' \item{\code{auc}}{Comma-separated AUROCs (three decimals) for the cancer types in \code{cancers}.}
+#' \item{\code{tier2}}{Tumor-enriched expression criterion (tumor-enriched in at least one cancer type): \code{"Meets"}, \code{"Does not meet"} or \code{"Not evaluable"}.}
+#' }
+"CTG.df"
