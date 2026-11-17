@@ -39,13 +39,23 @@ jobs:
           for (file in list.files("code", pattern = "\\.[Rr]$", recursive = TRUE, full.names = TRUE)) {
             parse(file = file)
           }
-      - uses: r-lib/actions/check-r-package@v2
+      - name: R CMD build and check
+        working-directory: MaligCTG
+        shell: Rscript {0}
+        run: |
+          rcmdcheck::rcmdcheck(
+            args = "--no-manual",
+            build_args = "--no-manual",
+            error_on = "warning",
+            check_dir = file.path(Sys.getenv("RUNNER_TEMP"), "MaligCTG-check")
+          )
+      - name: Upload R check results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          working-directory: MaligCTG
-          args: 'c("--no-manual")'
-          error-on: '"warning"'
-          check-dir: '"../../MaligCTG-check"'
-          upload-results: true
+          name: MaligCTG-check-results
+          path: ${{ runner.temp }}/MaligCTG-check
+          if-no-files-found: error
       - name: Verify both default calls in fresh R sessions
         shell: bash
         run: |
