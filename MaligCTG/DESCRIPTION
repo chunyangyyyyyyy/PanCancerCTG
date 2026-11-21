@@ -1,7 +1,7 @@
 Package: MaligCTG
 Type: Package
 Title: Malignant Cell Annotation with Cancer-Testis Genes
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person(given = "Chunyang", family = "Fu",
     role = c("aut", "cre"), email = "fuchunyang012@163.com")
 Description: Score cells against malignant-like and normal-like references

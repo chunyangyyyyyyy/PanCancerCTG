@@ -65,7 +65,7 @@ for (setting in names(settings)) {
         expected.diagnostics <- c(
             "score", "n.total", "n.valid", "fit.available", "model",
             "pro.low", "pro.high", "mean.low", "mean.high", "sd.low", "sd.high",
-            "ashman.D", "BIC.1", "BIC.2", "delta.BIC", "ks.D",
+            "ashman.D", "BI", "BIC.1", "BIC.2", "delta.BIC", "ks.D",
             "fit1.available", "fit1.error", "fit1.warning",
             "diagnostics.error", "diagnostics.warning"
         )
@@ -75,7 +75,9 @@ for (setting in names(settings)) {
                   all(d$n.total == nc), all(d$n.valid == nc),
                   all(d$fit.available), all(d$fit1.available),
                   all(is.na(d$diagnostics.error)),
-                  all(is.finite(d$ashman.D)), all(d$ks.D >= 0 & d$ks.D <= 1),
+                  all(is.finite(d$ashman.D)), all(is.finite(d$BI)),
+                  isTRUE(all.equal(d$BI, sqrt(d$pro.low * d$pro.high) * d$ashman.D)),
+                  all(d$ks.D >= 0 & d$ks.D <= 1),
                   isTRUE(all.equal(d$delta.BIC, d$BIC.2 - d$BIC.1)))
     } else {
         stopifnot(is.null(d))

@@ -6,6 +6,7 @@
         pro.low = NA_real_, pro.high = NA_real_,
         mean.low = NA_real_, mean.high = NA_real_,
         sd.low = NA_real_, sd.high = NA_real_, ashman.D = NA_real_,
+        BI = NA_real_,
         BIC.1 = NA_real_, BIC.2 = NA_real_, delta.BIC = NA_real_,
         ks.D = NA_real_, fit1.available = NA,
         fit1.error = NA_character_, fit1.warning = NA_character_,
@@ -57,6 +58,7 @@
             result$sd.low <- sqrt(vars[ord[1L]])
             result$sd.high <- sqrt(vars[ord[2L]])
             result$ashman.D <- abs(mu[1L] - mu[2L]) / sqrt(mean(vars))
+            result$BI <- sqrt(pro[1L] * pro[2L]) * result$ashman.D
             sorted <- sort(x)
             n <- length(sorted)
             cdf <- pro[1L] * stats::pnorm(sorted, mu[1L], sqrt(vars[1L])) +

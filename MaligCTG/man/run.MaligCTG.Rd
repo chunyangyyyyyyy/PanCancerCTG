@@ -67,6 +67,7 @@ score distribution fitted in this call. Its columns are:
 \item{\code{pro.low}, \code{pro.high}}{Mixture proportions ordered by component mean; these are not observed malignant-cell proportions.}
 \item{\code{mean.low}, \code{mean.high}, \code{sd.low}, \code{sd.high}}{Component means and standard deviations in increasing mean order.}
 \item{\code{ashman.D}}{Absolute component mean difference divided by the root mean of the two component variances.}
+\item{\code{BI}}{Bimodality Index, computed as \code{sqrt(pro.low * pro.high) * ashman.D}. For model E this uses the common component standard deviation; for model V it is an extension using the square root of the mean component variance. No BI cutoff is applied.}
 \item{\code{BIC.1}, \code{BIC.2}, \code{delta.BIC}}{One- and two-component BIC values, and BIC.2 minus BIC.1. Larger differences favor the two-component model under the mclust convention.}
 \item{\code{ks.D}}{Maximum empirical-versus-fitted CDF distance for the two-component model. This is a descriptive distance, not a calibrated KS-test P value.}
 \item{\code{fit1.available}, \code{fit1.error}, \code{fit1.warning}}{Whether the additional one-component fit supplied a finite BIC, and any diagnostic-fit error or warnings. Availability is NA when it was not attempted.}
@@ -100,6 +101,8 @@ Otsu searches midpoints between consecutive distinct sorted scores, maximizing b
 result <- run.MaligCTG(seu = seu, CTGs = CTG.df,
                       gene.id = "symbol", assay = "RNA")
 head(result)
+gmm.diagnostics <- attr(result, "gmm.diagnostics")
+print(gmm.diagnostics)
 scores <- run.MaligCTG(seu = seu, CTGs = CTG.df, binary = FALSE)
 otsu <- run.MaligCTG(seu = seu, CTGs = CTG.df, binary.method = "otsu")
 }

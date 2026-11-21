@@ -62,9 +62,15 @@ gmm.diagnostics <- attr(result, "gmm.diagnostics")
 print(gmm.diagnostics)
 ```
 
-It reports component proportions, means and standard deviations, Ashman's D, the BIC difference between two- and one-component models, and the empirical-versus-fitted CDF distance. These are descriptive diagnostics; they do not apply QC cutoffs or change cell labels. One-component diagnostic-fit failures are recorded in the table. Errors from the original two-component classification fit still propagate.
+It reports component proportions, means and standard deviations, Ashman's D, the Bimodality Index (BI), the BIC difference between two- and one-component models, and the empirical-versus-fitted CDF distance. These are descriptive diagnostics; they do not apply QC cutoffs or change cell labels. One-component diagnostic-fit failures are recorded in the table. Errors from the original two-component classification fit still propagate.
+
+BI is computed as `sqrt(pro.low * pro.high) * ashman.D`. For the equal-variance E model, it uses the common component standard deviation. For the unequal-variance V model, it is an extension using the square root of the mean component variance. The package does not apply a BI cutoff.
 
 Diagnostics describe all analyzed cells in that call. For per-sample diagnostics, call the function separately for each sample. Subsetting a returned result does not refit its diagnostics. Use `saveRDS(result, "MaligCTG.result.rds")` to retain the attribute, or export the diagnostic table separately; CSV output of the cell table does not retain it. Otsu and continuous-score-only results do not have this attribute.
+
+## Practical interpretation
+
+Use the continuous malignant score together with expression-based clustering and cell-identity evidence to annotate candidate malignant populations. Inspect score distributions within clusters and their sizes relative to the analyzed cell set. Small clusters with consistently high scores may represent rare malignant populations and warrant closer review of GMM or Otsu labels. Binary labels are auxiliary outputs and should be interpreted alongside these observations.
 
 ## License
 

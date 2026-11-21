@@ -73,6 +73,18 @@ for (model in c("E", "V")) {
               isTRUE(all.equal(d$pro.low + d$pro.high, 1)),
               isTRUE(all.equal(d$BIC.2, unname(fit$bic))),
               isTRUE(all.equal(d$BIC.1, unname(fit.one(x)$bic))))
+    # The requested BI definition applies to the fitted E or V model.
+    component.vars <- fit$parameters$variance$sigmasq
+    if (length(component.vars) == 1L) component.vars <- rep(component.vars, 2L)
+    expected.BI <- sqrt(prod(fit$parameters$pro)) * sqrt(2) *
+        abs(diff(fit$parameters$mean)) / sqrt(sum(component.vars))
+    stopifnot(is.finite(d$BI), d$BI >= 0,
+              isTRUE(all.equal(d$BI, unname(expected.BI), tolerance = 1e-12)))
+    if (model == "E") {
+        common.sd.BI <- sqrt(d$pro.low * d$pro.high) *
+            abs(d$mean.high - d$mean.low) / d$sd.low
+        stopifnot(isTRUE(all.equal(d$BI, common.sd.BI, tolerance = 1e-12)))
+    }
     mixture.cdf <- function(q) {
         d$pro.low * pnorm(q, d$mean.low, d$sd.low) +
             d$pro.high * pnorm(q, d$mean.high, d$sd.high)
@@ -81,7 +93,7 @@ for (model in c("E", "V")) {
     ks <- suppressWarnings(stats::ks.test(x, mixture.cdf))
     stopifnot(isTRUE(all.equal(d$ks.D, unname(ks$statistic), tolerance = 1e-12)))
 }
-cat("PASS: E/V component diagnostics, BIC values and KS distance\n")
+cat("PASS: E/V component diagnostics, BI, BIC values and KS distance\n")
 
 # Inject failures through a private-function copy; never change a namespace.
 fit <- fit.model(x, G = 2)
@@ -152,5 +164,5 @@ for (replacement in list(broken, corrupt.diagnostics)) {
 d <- diagnose(c(1, NA, Inf), NULL, seed = NULL)
 stopifnot(!d$fit.available, d$n.total == 3L, d$n.valid == 1L,
           is.na(d$fit1.available), !is.na(d$diagnostics.error))
-stopifnot(!any(c("BI", "qc.pass") %in% names(d)))
+stopifnot("BI" %in% names(d), is.na(d$BI), !("qc.pass" %in% names(d)))
 cat("PASS: diagnostic availability is separate from cell classification\n")
