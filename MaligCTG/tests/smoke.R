@@ -90,7 +90,12 @@ cat("PASS: bundled catalog, public exports and workspace isolation\n")
 # Compare columns, not the new diagnostic attribute.
 baseline.run <- run
 baseline.env <- new.env(parent = environment(baseline.run))
-baseline.env$.gmm_side <- .baseline_gmm_side
+baseline.env$.gmm_side <- function(...) {
+    value <- .baseline_gmm_side(...)
+    # Bridge only the new metadata container; the frozen classifier is unchanged.
+    attr(value, "gmm.diagnostics") <- data.frame(baseline = TRUE)
+    value
+}
 environment(baseline.run) <- baseline.env
 for (classification.seed in list(1234, NULL)) {
     set.seed(9981)
