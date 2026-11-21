@@ -38,6 +38,28 @@
 #' \item{\code{malignant}}{Logical intersection of the malignant sides of both scores; present only when \code{binary = TRUE}. May contain \code{NA}.}
 #' }
 #'
+#' With \code{binary = TRUE} and \code{binary.method = "gmm"}, the
+#' \code{gmm.diagnostics} attribute contains a two-row data.frame, one row per
+#' score distribution fitted in this call. Its columns are:
+#' \describe{
+#' \item{\code{score}}{The score column being fitted.}
+#' \item{\code{n.total}, \code{n.valid}}{Total observations and finite observations. Non-finite scores are not removed from classification.}
+#' \item{\code{fit.available}, \code{model}}{Whether the original two-component fit was returned, and its mclust model name. Availability is not a goodness-of-fit decision.}
+#' \item{\code{pro.low}, \code{pro.high}}{Mixture proportions ordered by component mean; these are not observed malignant-cell proportions.}
+#' \item{\code{mean.low}, \code{mean.high}, \code{sd.low}, \code{sd.high}}{Component means and standard deviations in increasing mean order.}
+#' \item{\code{ashman.D}}{Absolute component mean difference divided by the root mean of the two component variances.}
+#' \item{\code{BIC.1}, \code{BIC.2}, \code{delta.BIC}}{One- and two-component BIC values, and BIC.2 minus BIC.1. Larger differences favor the two-component model under the mclust convention.}
+#' \item{\code{ks.D}}{Maximum empirical-versus-fitted CDF distance for the two-component model. This is a descriptive distance, not a calibrated KS-test P value.}
+#' \item{\code{fit1.available}, \code{fit1.error}, \code{fit1.warning}}{Whether the additional one-component fit supplied a finite BIC, and any diagnostic-fit error or warnings. Availability is NA when it was not attempted.}
+#' \item{\code{diagnostics.error}, \code{diagnostics.warning}}{Other diagnostic-computation errors or warnings. Unavailable numeric diagnostics are NA.}
+#' }
+#' No automatic QC threshold or pass/fail decision is applied. Diagnostic fitting
+#' preserves the random state left by the original classification. Errors from
+#' the original two-component fit still propagate. Diagnostics describe the full
+#' analyzed set for this call, not individual metadata samples or later subsets.
+#' CSV output does not retain the attribute; save the result with
+#' \code{saveRDS()} or export the diagnostic table separately.
+#'
 #' @author Chunyang Fu
 #' @examples
 #' \dontrun{
@@ -133,11 +155,27 @@ run.MaligCTG <- function(seu, CTGs = MaligCTG::CTG.df, gene.id = c("symbol", "en
         row.names       = use
     )
 
-    ## binary label: malignant side of both scores
+    ## binary labels retain the original two-score intersection
     if (binary) {
         side.FUN <- switch(binary.method, gmm = .gmm_side, otsu = .otsu_side)
-        output$malignant <- side.FUN(output$malignant.score, upper = TRUE, p.threshold = p.threshold, seed = seed) &
-                            side.FUN(output$normal.score, upper = FALSE, p.threshold = p.threshold, seed = seed)
+        mal.side <- side.FUN(output$malignant.score, upper = TRUE,
+                             p.threshold = p.threshold, seed = seed)
+        nor.side <- side.FUN(output$normal.score, upper = FALSE,
+                             p.threshold = p.threshold, seed = seed)
+        output$malignant <- as.logical(mal.side) & as.logical(nor.side)
+
+        if (binary.method == "gmm") {
+            diagnostics <- rbind(
+                data.frame(score = "malignant.score",
+                           attr(mal.side, "gmm.diagnostics"),
+                           stringsAsFactors = FALSE),
+                data.frame(score = "normal.score",
+                           attr(nor.side, "gmm.diagnostics"),
+                           stringsAsFactors = FALSE)
+            )
+            rownames(diagnostics) <- NULL
+            attr(output, "gmm.diagnostics") <- diagnostics
+        }
     }
 
     output
@@ -199,10 +237,15 @@ run.MaligCTG <- function(seu, CTGs = MaligCTG::CTG.df, gene.id = c("symbol", "en
     fit <- mclust::Mclust(x, G = 2, verbose = FALSE)
     if (is.null(fit)) {
         warning("two-component mixture model could not be fitted; returning NA labels")
-        return(rep(NA, length(x)))
+        side <- rep(NA, length(x))
+    } else {
+        comp <- if (upper) which.max(fit$parameters$mean) else which.min(fit$parameters$mean)
+        side <- unname(fit$z[, comp] > p.threshold)
     }
-    comp <- if (upper) which.max(fit$parameters$mean) else which.min(fit$parameters$mean)
-    unname(fit$z[, comp] > p.threshold)
+
+    # Diagnostics run after classification and do not gate the side labels.
+    attr(side, "gmm.diagnostics") <- .gmm_diagnostics(x, fit, seed)
+    side
 }
 
 ## Otsu's threshold: maximize the between-class variance w0 * w1 * (mu0 - mu1)^2 over all splits of the sorted scores

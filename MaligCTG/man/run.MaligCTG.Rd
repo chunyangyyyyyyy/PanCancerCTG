@@ -56,6 +56,28 @@ matrix order by default). Columns:
 \item{\code{normal.score}}{SingleR score from \code{pred$scores[, "low"]}; not a normal probability.}
 \item{\code{malignant}}{Logical intersection of the malignant sides of both scores; present only when \code{binary = TRUE}. May contain \code{NA}.}
 }
+
+With \code{binary = TRUE} and \code{binary.method = "gmm"}, the
+\code{gmm.diagnostics} attribute contains a two-row data.frame, one row per
+score distribution fitted in this call. Its columns are:
+\describe{
+\item{\code{score}}{The score column being fitted.}
+\item{\code{n.total}, \code{n.valid}}{Total observations and finite observations. Non-finite scores are not removed from classification.}
+\item{\code{fit.available}, \code{model}}{Whether the original two-component fit was returned, and its mclust model name. Availability is not a goodness-of-fit decision.}
+\item{\code{pro.low}, \code{pro.high}}{Mixture proportions ordered by component mean; these are not observed malignant-cell proportions.}
+\item{\code{mean.low}, \code{mean.high}, \code{sd.low}, \code{sd.high}}{Component means and standard deviations in increasing mean order.}
+\item{\code{ashman.D}}{Absolute component mean difference divided by the root mean of the two component variances.}
+\item{\code{BIC.1}, \code{BIC.2}, \code{delta.BIC}}{One- and two-component BIC values, and BIC.2 minus BIC.1. Larger differences favor the two-component model under the mclust convention.}
+\item{\code{ks.D}}{Maximum empirical-versus-fitted CDF distance for the two-component model. This is a descriptive distance, not a calibrated KS-test P value.}
+\item{\code{fit1.available}, \code{fit1.error}, \code{fit1.warning}}{Whether the additional one-component fit supplied a finite BIC, and any diagnostic-fit error or warnings. Availability is NA when it was not attempted.}
+\item{\code{diagnostics.error}, \code{diagnostics.warning}}{Other diagnostic-computation errors or warnings. Unavailable numeric diagnostics are NA.}
+}
+No automatic QC threshold or pass/fail decision is applied. Diagnostic fitting
+preserves the random state left by the original classification. Errors from
+the original two-component fit still propagate. Diagnostics describe the full
+analyzed set for this call, not individual metadata samples or later subsets.
+CSV output does not retain the attribute; save the result with
+\code{saveRDS()} or export the diagnostic table separately.
 }
 \description{
 Score cells against CTG-derived malignant-like and normal-like references, and optionally assign binary malignant labels.

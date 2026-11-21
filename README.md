@@ -53,6 +53,19 @@ SingleR scores are similarity scores, not malignant probabilities. GMM uses `p.t
 - Match gene identifiers to the selected CTG-table column (`gene.id = "symbol"` by default, or `"ensembl"`).
 - For a Seurat v5 assay with multiple counts layers, join those layers with `SeuratObject::JoinLayers()` first.
 
+## GMM diagnostics
+
+For the default GMM classification, the result also contains a two-row diagnostic table:
+
+```r
+gmm.diagnostics <- attr(result, "gmm.diagnostics")
+print(gmm.diagnostics)
+```
+
+It reports component proportions, means and standard deviations, Ashman's D, the BIC difference between two- and one-component models, and the empirical-versus-fitted CDF distance. These are descriptive diagnostics; they do not apply QC cutoffs or change cell labels. One-component diagnostic-fit failures are recorded in the table. Errors from the original two-component classification fit still propagate.
+
+Diagnostics describe all analyzed cells in that call. For per-sample diagnostics, call the function separately for each sample. Subsetting a returned result does not refit its diagnostics. Use `saveRDS(result, "MaligCTG.result.rds")` to retain the attribute, or export the diagnostic table separately; CSV output of the cell table does not retain it. Otsu and continuous-score-only results do not have this attribute.
+
 ## License
 
 MIT. See [`LICENSE`](LICENSE).

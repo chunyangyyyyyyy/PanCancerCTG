@@ -3,6 +3,12 @@ args <- commandArgs(trailingOnly = TRUE)
 mode <- match.arg(if (length(args)) args[1L] else "namespaced",
                   c("namespaced", "attached"))
 stopifnot(!"package:MaligCTG" %in% search())
+baseline.file <- if (file.exists("helpers/gmm-baseline.R")) {
+    "helpers/gmm-baseline.R"
+} else {
+    file.path("MaligCTG", "tests", "helpers", "gmm-baseline.R")
+}
+source(baseline.file, local = TRUE)
 catalog <- MaligCTG::CTG.df
 stopifnot(is.data.frame(catalog), nrow(catalog) == 443L,
           all(c("symbol", "ensembl") %in% names(catalog)),
@@ -54,8 +60,48 @@ for (setting in names(settings)) {
               identical(a$n.CTG, as.integer(colSums(counts[seq_len(nctg), ] > 0))),
               all(is.finite(a$malignant.score)), all(is.finite(a$normal.score)))
     if (setting != "scores") stopifnot(is.logical(a$malignant))
+    d <- attr(a, "gmm.diagnostics")
+    if (setting == "gmm") {
+        expected.diagnostics <- c(
+            "score", "n.total", "n.valid", "fit.available", "model",
+            "pro.low", "pro.high", "mean.low", "mean.high", "sd.low", "sd.high",
+            "ashman.D", "BIC.1", "BIC.2", "delta.BIC", "ks.D",
+            "fit1.available", "fit1.error", "fit1.warning",
+            "diagnostics.error", "diagnostics.warning"
+        )
+        stopifnot(is.data.frame(d), nrow(d) == 2L,
+                  identical(names(d), expected.diagnostics),
+                  identical(d$score, c("malignant.score", "normal.score")),
+                  all(d$n.total == nc), all(d$n.valid == nc),
+                  all(d$fit.available), all(d$fit1.available),
+                  all(is.na(d$diagnostics.error)),
+                  all(is.finite(d$ashman.D)), all(d$ks.D >= 0 & d$ks.D <= 1),
+                  isTRUE(all.equal(d$delta.BIC, d$BIC.2 - d$BIC.1)))
+    } else {
+        stopifnot(is.null(d))
+    }
     cat("PASS:", mode, setting, "columns, order, repeatability and default catalog\n")
 }
 if (mode == "namespaced") stopifnot(!"package:MaligCTG" %in% search())
 stopifnot(identical(getNamespaceExports("MaligCTG"), "run.MaligCTG"))
 cat("PASS: bundled catalog, public exports and workspace isolation\n")
+
+# Reuse the original classifier with the same scoring/reference pipeline.
+# Compare columns, not the new diagnostic attribute.
+baseline.run <- run
+baseline.env <- new.env(parent = environment(baseline.run))
+baseline.env$.gmm_side <- .baseline_gmm_side
+environment(baseline.run) <- baseline.env
+for (classification.seed in list(1234, NULL)) {
+    set.seed(9981)
+    previous <- baseline.run(seu = seu, seed = classification.seed)
+    previous.rng <- .Random.seed
+    set.seed(9981)
+    current <- run(seu = seu, seed = classification.seed)
+    current.rng <- .Random.seed
+    for (column in names(previous)) {
+        stopifnot(identical(previous[[column]], current[[column]]))
+    }
+    stopifnot(identical(previous.rng, current.rng))
+}
+cat("PASS:", mode, "all original columns and post-call RNG match the original classifier\n")

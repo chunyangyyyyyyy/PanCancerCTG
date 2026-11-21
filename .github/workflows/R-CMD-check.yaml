@@ -31,7 +31,9 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: MaligCTG
-          extra-packages: any::rcmdcheck
+          extra-packages: |
+            any::rcmdcheck
+            any::roxygen2
           needs: check
       - name: Parse the standalone scripts without running them
         shell: Rscript {0}
@@ -39,6 +41,12 @@ jobs:
           for (file in list.files("code", pattern = "\\.[Rr]$", recursive = TRUE, full.names = TRUE)) {
             parse(file = file)
           }
+      - name: Verify generated documentation
+        shell: Rscript {0}
+        run: |
+          roxygen2::roxygenise("MaligCTG")
+          status <- system2("git", c("diff", "--exit-code", "--", "MaligCTG/NAMESPACE", "MaligCTG/man"))
+          if (status != 0L) stop("Generated documentation differs from committed files")
       - name: R CMD build and check
         working-directory: MaligCTG
         shell: Rscript {0}
